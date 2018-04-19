@@ -16,13 +16,13 @@ package rpc
 
 import (
 	"fmt"
+	"time"
+
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	cutils "github.com/open-falcon/falcon-plus/common/utils"
 	"github.com/open-falcon/falcon-plus/modules/transfer/g"
 	"github.com/open-falcon/falcon-plus/modules/transfer/proc"
 	"github.com/open-falcon/falcon-plus/modules/transfer/sender"
-	"strconv"
-	"time"
 )
 
 type Transfer int
@@ -59,39 +59,32 @@ func RecvMetricValues(args []*cmodel.MetricValue, reply *cmodel.TransferResponse
 	items := []*cmodel.MetaData{}
 	for _, v := range args {
 		if v == nil {
-			reply.Invalid += 1
-			continue
-		}
-
-		// 历史遗留问题.
-		// 老版本agent上报的metric=kernel.hostname的数据,其取值为string类型,现在已经不支持了;所以,这里硬编码过滤掉
-		if v.Metric == "kernel.hostname" {
-			reply.Invalid += 1
+			reply.Invalid++
 			continue
 		}
 
 		if v.Metric == "" || v.Endpoint == "" {
-			reply.Invalid += 1
+			reply.Invalid++
 			continue
 		}
 
 		if v.Type != g.COUNTER && v.Type != g.GAUGE && v.Type != g.DERIVE {
-			reply.Invalid += 1
+			reply.Invalid++
 			continue
 		}
 
 		if v.Value == "" {
-			reply.Invalid += 1
+			reply.Invalid++
 			continue
 		}
 
 		if v.Step <= 0 {
-			reply.Invalid += 1
+			reply.Invalid++
 			continue
 		}
 
 		if len(v.Metric)+len(v.Tags) > 510 {
-			reply.Invalid += 1
+			reply.Invalid++
 			continue
 		}
 
@@ -106,34 +99,28 @@ func RecvMetricValues(args []*cmodel.MetricValue, reply *cmodel.TransferResponse
 			Endpoint:    v.Endpoint,
 			Timestamp:   v.Timestamp,
 			Step:        v.Step,
+			RawData:     v.Value,
 			CounterType: v.Type,
 			Tags:        cutils.DictedTagstring(v.Tags), //TODO tags键值对的个数,要做一下限制
 		}
 
 		valid := true
-		var vv float64
-		var err error
-
 		switch cv := v.Value.(type) {
 		case string:
-			vv, err = strconv.ParseFloat(cv, 64)
-			if err != nil {
-				valid = false
-			}
+			fv.Value = 0.0
 		case float64:
-			vv = cv
+			fv.Value = cv
 		case int64:
-			vv = float64(cv)
+			fv.Value = float64(cv)
 		default:
 			valid = false
 		}
 
 		if !valid {
-			reply.Invalid += 1
+			reply.Invalid++
 			continue
 		}
 
-		fv.Value = vv
 		items = append(items, fv)
 	}
 

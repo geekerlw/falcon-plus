@@ -16,13 +16,14 @@ package sender
 
 import (
 	"fmt"
+	"log"
+
 	backend "github.com/open-falcon/falcon-plus/common/backend_pool"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/transfer/g"
 	"github.com/open-falcon/falcon-plus/modules/transfer/proc"
 	rings "github.com/toolkits/consistent/rings"
 	nlist "github.com/toolkits/container/list"
-	"log"
 )
 
 const (
@@ -136,7 +137,7 @@ func Push2GraphSendQueue(items []*cmodel.MetaData) {
 		for _, addr := range cnode.Addrs {
 			Q := GraphQueues[node+addr]
 			if !Q.PushFront(graphItem) {
-				errCnt += 1
+				errCnt++
 			}
 		}
 
@@ -161,6 +162,19 @@ func convert2GraphItem(d *cmodel.MetaData) (*cmodel.GraphItem, error) {
 		item.Step = MinStep
 	}
 	item.Heartbeat = item.Step * 2
+
+	switch v := d.RawData.(type) {
+	case string:
+		item.RawData = v
+	case int32:
+	case int64:
+		item.RawData = fmt.Sprintf("%d", v)
+	case float32:
+	case float64:
+		item.RawData = fmt.Sprintf("%f", v)
+	default:
+		item.RawData = "nodata"
+	}
 
 	if d.CounterType == g.GAUGE {
 		item.DsType = d.CounterType
