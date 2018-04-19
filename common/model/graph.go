@@ -27,6 +27,7 @@ type GraphItem struct {
 	Metric    string            `json:"metric"`
 	Tags      map[string]string `json:"tags"`
 	Value     float64           `json:"value"`
+	RawData   string            `json:"origin"`
 	Timestamp int64             `json:"timestamp"`
 	DsType    string            `json:"dstype"`
 	Step      int               `json:"step"`
@@ -37,11 +38,12 @@ type GraphItem struct {
 
 func (this *GraphItem) String() string {
 	return fmt.Sprintf(
-		"<Endpoint:%s, Metric:%s, Tags:%v, Value:%v, TS:%d %v DsType:%s, Step:%d, Heartbeat:%d, Min:%s, Max:%s>",
+		"<Endpoint:%s, Metric:%s, Tags:%v, Value:%v, RawData:%v, TS:%d %v DsType:%s, Step:%d, Heartbeat:%d, Min:%s, Max:%s>",
 		this.Endpoint,
 		this.Metric,
 		this.Tags,
 		this.Value,
+		this.RawData,
 		this.Timestamp,
 		MUtils.UnixTsFormat(this.Timestamp),
 		this.DsType,
