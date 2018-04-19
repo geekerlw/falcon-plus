@@ -22,6 +22,7 @@ CREATE TABLE `graph`.`endpoint_counter` (
   `counter` varchar(255) NOT NULL DEFAULT '',
   `step` int(11) not null default 60 comment 'in second',
   `type` varchar(16) not null comment 'GAUGE|COUNTER|DERIVE',
+  `value` varchar(255) NOT NULL DEFAULT 'raw data',
   `ts` int(11) DEFAULT NULL,
   `t_create` DATETIME NOT NULL COMMENT 'create time',
   `t_modify` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'last modify time',
