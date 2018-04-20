@@ -249,12 +249,11 @@ func updateIndexFromOneItem(item *cmodel.GraphItem, conn *sql.DB) error {
 		counter = fmt.Sprintf("%s/%s", counter, cutils.SortedTags(item.Tags))
 	}
 
-	sqlStr = `INSERT INTO endpoint_counter(endpoint_id,counter,step,type,value,ts,t_create)
-		VALUES (?,?,?,?,?,?,NOW())
-		ON DUPLICATE KEY UPDATE step=?, type=?, value=?, ts=?, t_modify=NOW()`
+	sqlStr = `INSERT INTO endpoint_counter(endpoint_id,counter,step,type,ts,t_create)
+		VALUES (?,?,?,?,?,NOW())
+		ON DUPLICATE KEY UPDATE ts=?,step=?,type=?,t_modify=NOW()`
 
-	_, err = conn.Exec(sqlStr, endpointId, counter, item.Step, item.DsType,
-		item.RawData, ts, item.Step, item.DsType, item.RawData, ts)
+	_, err = conn.Exec(sqlStr, endpointId, counter, item.Step, item.DsType, ts, ts, item.Step, item.DsType)
 	if err != nil {
 		log.Error(err)
 		return err
