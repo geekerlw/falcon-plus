@@ -50,6 +50,15 @@ func GetConcurrentOfUpdateIndexAll() int {
 func UpdateIndexAllByDefaultStep() {
 	UpdateIndexAll(DefaultUpdateStepInSec)
 }
+
+// 单机的索引更新
+func UpdateIndexByEndpoints(endpoints []string, step int) {
+	for _, ep := range endpoints {
+		updateIndexEndpoint(ep)
+		time.Sleep(time.Duration(step) * time.Second)
+	}
+}
+
 func UpdateIndexAll(updateStepInSec int64) {
 	// 减少任务积压,但高并发时可能无效(AvailablePermits不是线程安全的)
 	if semaIndexUpdateAllTask.AvailablePermits() <= 0 {
@@ -105,6 +114,43 @@ func UpdateIndexOne(endpoint string, metric string, tags map[string]string, dsty
 	}
 
 	return updateIndexFromOneItem(gitem, dbConn)
+}
+
+// 以endpoint为单位更新数据库，更新切片处理
+func updateIndexEndpoint(endpoint string) int {
+	var ret int = 0
+	dbConn, err := g.GetDbConn("UpdateIndexIncrTask")
+	if err != nil {
+		log.Println("[ERROR] make dbConn fail", err)
+		return ret
+	}
+
+	keys := IndexedItemCache.Keys()
+	for _, key := range keys {
+		icitem := IndexedItemCache.Get(key)
+		if icitem == nil {
+			continue
+		}
+
+		gitem := icitem.(*IndexCacheItem).Item
+		if gitem.Endpoint != endpoint {
+			continue
+		}
+
+		// 并发写sql更新
+		semaIndexUpdateAll.Acquire()
+		go func(gitem *cmodel.GraphItem, dbConn *sql.DB) {
+			defer semaIndexUpdateAll.Release()
+			err := updateIndexFromOneItem(gitem, dbConn)
+			if err != nil {
+				proc.IndexUpdateAllErrorCnt.Incr()
+			}
+		}(gitem, dbConn)
+
+		ret++
+	}
+
+	return ret
 }
 
 func updateIndexAll(updateStepInSec int64) int {
