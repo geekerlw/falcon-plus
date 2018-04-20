@@ -167,4 +167,5 @@ type GraphLastResp struct {
 	Endpoint string   `json:"endpoint"`
 	Counter  string   `json:"counter"`
 	Value    *RRDData `json:"value"`
+	RawData  string   `json:"rawdata"`
 }

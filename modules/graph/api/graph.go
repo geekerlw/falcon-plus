@@ -366,6 +366,7 @@ func (this *Graph) Last(param cmodel.GraphLastParam, resp *cmodel.GraphLastResp)
 	resp.Endpoint = param.Endpoint
 	resp.Counter = param.Counter
 	resp.Value = GetLast(param.Endpoint, param.Counter)
+	resp.RawData = GetLastRawData(param.Endpoint, param.Counter)
 
 	return nil
 }
@@ -422,4 +423,10 @@ func GetLastRaw(endpoint, counter string) *cmodel.RRDData {
 	md5 := cutils.Md5(endpoint + "/" + counter)
 	item := store.GetLastItem(md5)
 	return cmodel.NewRRDData(item.Timestamp, item.Value)
+}
+
+func GetLastRawData(endpoint, counter string) string {
+	md5 := cutils.Md5(endpoint + "/" + counter)
+	item := store.GetLastItem(md5)
+	return item.RawData
 }
