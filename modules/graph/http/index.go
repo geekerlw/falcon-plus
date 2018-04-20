@@ -28,24 +28,6 @@ func configIndexRoutes() {
 		JSONR(c, 200, gin.H{"msg": "ok"})
 	})
 
-	type APIIndexEndpointInput struct {
-		Endpoints []string `json:"endpoints" form:"endpoints" binding:"required"`
-		Step      int      `json:"step" form:"step"`
-	}
-
-	router.POST("/index/updateEndpoints", func(c *gin.Context) {
-		var inputs APIIndexEndpointInput
-
-		if err := c.Bind(&inputs); err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-
-		go index.UpdateIndexByEndpoints(inputs.Endpoints, inputs.Step)
-
-		JSONR(c, 200, gin.H{"msg": "ok"})
-	})
-
 	// 获取索引全量更新的并行数
 	router.GET("/index/updateAll/concurrent", func(c *gin.Context) {
 		JSONR(c, 200, gin.H{"msg": "ok", "value": index.GetConcurrentOfUpdateIndexAll()})
