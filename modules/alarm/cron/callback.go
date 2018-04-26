@@ -95,6 +95,7 @@ func Callback(event *model.Event, action *api.Action) string {
 	req.Param("stra_id", fmt.Sprintf("%d", event.StrategyId()))
 	req.Param("left_value", utils.ReadableFloat(event.LeftValue))
 	req.Param("tags", tags)
+	req.Param("note", event.Note())
 
 	resp, e := req.String()
 
